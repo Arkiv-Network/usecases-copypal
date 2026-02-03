@@ -4,19 +4,19 @@ on:
   workflow_dispatch:
     inputs:
       api_base:
-        description: 'API Base URL'
+        description: "API Base URL"
         required: true
-        default: 'https://copypal.online/api'
+        default: "https://copypal.usecases.arkiv.network/api"
         type: string
       frontend_url:
-        description: 'Frontend URL'
+        description: "Frontend URL"
         required: true
-        default: 'https://copypal.online'
+        default: "https://copypal.usecases.arkiv.network"
         type: string
       test_suite:
-        description: 'Test Suite'
+        description: "Test Suite"
         required: true
-        default: 'all'
+        default: "all"
         type: choice
         options:
           - all

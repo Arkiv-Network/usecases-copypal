@@ -1,108 +1,114 @@
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardHeader, CardContent } from "@/components/ui/card"
-import { Link as LinkIcon, Mail } from "lucide-react"
-import { ShareCard } from "@/components/ShareCard"
-import { HelpModal } from "@/components/modals/HelpModal"
-import { LoginMethodModal } from "@/components/modals/LoginMethodModal"
-import { WalletModal } from "@/components/modals/WalletModal"
-import { WalletConnectButton } from "@/components/WalletConnectButton"
-import { doPow } from "@/lib/pow"
+import { Link as LinkIcon, Mail } from "lucide-react";
+import { useEffect, useState } from "react";
+import { HelpModal } from "@/components/modals/HelpModal";
+import { LoginMethodModal } from "@/components/modals/LoginMethodModal";
+import { WalletModal } from "@/components/modals/WalletModal";
+import { ShareCard } from "@/components/ShareCard";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { WalletConnectButton } from "@/components/WalletConnectButton";
+import { doPow } from "@/lib/pow";
 
 interface User {
-  email?: string
-  walletAddress?: string
+  email?: string;
+  walletAddress?: string;
 }
 
 interface AuthState {
-  user: User | null
-  sessionId: string | null
-  loading: boolean
+  user: User | null;
+  sessionId: string | null;
+  loading: boolean;
 }
 
+const API_BASE =
+  import.meta.env.VITE_API_BASE ||
+  (import.meta.env.MODE === "production"
+    ? "https://copypal.usecases.arkiv.network/api"
+    : "http://localhost:19234");
 
-const API_BASE = import.meta.env.VITE_API_BASE ||
-  (import.meta.env.MODE === 'production'
-    ? 'https://copypal.online/api'
-    : 'http://localhost:19234')
-
- 
 export default function App() {
-  const [link, setLink] = useState<string | null>(null)
-  const [links, setLinks] = useState<string[]>([])
+  const [link, setLink] = useState<string | null>(null);
+  const [links, setLinks] = useState<string[]>([]);
 
   // Auth state
   const [auth, setAuth] = useState<AuthState>({
     user: null,
-    sessionId: localStorage.getItem('sessionId'),
-    loading: true
-  })
-  const [email, setEmail] = useState('')
-  const [code, setCode] = useState('')
-  const [showEmailModal, setShowEmailModal] = useState(false)
-  const [showCodeInput, setShowCodeInput] = useState(false)
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
+    sessionId: localStorage.getItem("sessionId"),
+    loading: true,
+  });
+  const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [showCodeInput, setShowCodeInput] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   // Modal states
-  const [helpModalOpen, setHelpModalOpen] = useState(false)
-  const [loginMethodModalOpen, setLoginMethodModalOpen] = useState(false)
-  const [walletModalOpen, setWalletModalOpen] = useState(false)
+  const [helpModalOpen, setHelpModalOpen] = useState(false);
+  const [loginMethodModalOpen, setLoginMethodModalOpen] = useState(false);
+  const [walletModalOpen, setWalletModalOpen] = useState(false);
 
   // Check session on mount
   useEffect(() => {
-    checkSession()
-  }, [])
+    checkSession();
+  }, []);
 
   const checkSession = async () => {
-    const sessionId = localStorage.getItem('sessionId')
+    const sessionId = localStorage.getItem("sessionId");
     if (!sessionId) {
-      console.log('No sessionId found in localStorage')
-      setAuth(prev => ({ ...prev, loading: false }))
-      return
+      console.log("No sessionId found in localStorage");
+      setAuth((prev) => ({ ...prev, loading: false }));
+      return;
     }
 
-    console.log('Checking session validity for:', sessionId.substring(0, 10) + '...')
+    console.log(
+      "Checking session validity for:",
+      sessionId.substring(0, 10) + "...",
+    );
 
     try {
       const response = await fetch(`${API_BASE}/v1/auth/session`, {
         headers: {
-          'Authorization': `Bearer ${sessionId}`
-        }
-      })
+          Authorization: `Bearer ${sessionId}`,
+        },
+      });
 
       if (response.ok) {
-        const data = await response.json()
-        console.log('Session valid for user:', data.user?.email)
+        const data = await response.json();
+        console.log("Session valid for user:", data.user?.email);
         setAuth({
           user: data.user,
           sessionId,
-          loading: false
-        })
+          loading: false,
+        });
       } else {
-        console.log('Session invalid, status:', response.status)
-        localStorage.removeItem('sessionId')
-        setAuth({ user: null, sessionId: null, loading: false })
+        console.log("Session invalid, status:", response.status);
+        localStorage.removeItem("sessionId");
+        setAuth({ user: null, sessionId: null, loading: false });
         // Don't show message, just silently logout
       }
     } catch (err) {
-      console.error('Session check failed:', err)
-      localStorage.removeItem('sessionId')
-      setAuth({ user: null, sessionId: null, loading: false })
+      console.error("Session check failed:", err);
+      localStorage.removeItem("sessionId");
+      setAuth({ user: null, sessionId: null, loading: false });
     }
-  }
+  };
 
-  const handleCreateLink = async (data: { content?: string; file?: File; expiresAt: Date }): Promise<string | null> => {
-    setError('')
+  const handleCreateLink = async (data: {
+    content?: string;
+    file?: File;
+    expiresAt: Date;
+  }): Promise<string | null> => {
+    setError("");
 
     try {
       // Perform Proof of Work
-      const pow = await doPow(18) // Difficulty 18 for ~200ms on typical CPU
+      const pow = await doPow(18); // Difficulty 18 for ~200ms on typical CPU
 
-      const headers: HeadersInit = { 'Content-Type': 'application/json' }
+      const headers: HeadersInit = { "Content-Type": "application/json" };
       if (auth.sessionId) {
-        headers['Authorization'] = `Bearer ${auth.sessionId}`
+        headers["Authorization"] = `Bearer ${auth.sessionId}`;
       }
 
       let payload: any = {
@@ -111,74 +117,78 @@ export default function App() {
           nonce: pow.nonce,
           salt: Array.from(pow.salt),
           digest: pow.digest,
-          difficulty: pow.difficulty
-        }
-      }
+          difficulty: pow.difficulty,
+        },
+      };
 
       if (data.file) {
         // Convert file to base64
         const fileData = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader()
+          const reader = new FileReader();
           reader.onload = () => {
-            const result = reader.result as string
-            resolve(result.split(',')[1]) // Remove data:... prefix
-          }
-          reader.onerror = reject
-          reader.readAsDataURL(data.file!)
-        })
+            const result = reader.result as string;
+            resolve(result.split(",")[1]); // Remove data:... prefix
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(data.file!);
+        });
 
         payload = {
           ...payload,
-          kind: 'file',
+          kind: "file",
           content: `File: ${data.file.name}`,
           fileName: data.file.name,
           fileType: data.file.type,
           fileSize: data.file.size,
-          fileData: fileData
-        }
+          fileData: fileData,
+        };
       } else {
         payload = {
           ...payload,
-          kind: 'text',
-          content: data.content || ''
-        }
+          kind: "text",
+          content: data.content || "",
+        };
       }
 
       const response = await fetch(`${API_BASE}/v1/clipboard`, {
-        method: 'POST',
+        method: "POST",
         headers,
-        body: JSON.stringify(payload)
-      })
+        body: JSON.stringify(payload),
+      });
 
-      const responseData = await response.json()
+      const responseData = await response.json();
 
       if (responseData.success) {
-        setLink(responseData.url)
-        setMessage('Link created successfully!')
-        navigator.clipboard?.writeText(responseData.url)
+        setLink(responseData.url);
+        setMessage("Link created successfully!");
+        navigator.clipboard?.writeText(responseData.url);
 
         // Extract clipboard ID from URL for progress tracking
-        const clipboardId = responseData.url.split('/').pop()
+        const clipboardId = responseData.url.split("/").pop();
         if (clipboardId) {
-          return clipboardId
+          return clipboardId;
         }
       } else {
-        setError(responseData.error || 'Failed to create link')
+        setError(responseData.error || "Failed to create link");
       }
     } catch (err) {
-      setError('Network error. Please try again.')
+      setError("Network error. Please try again.");
     }
 
-    return null
-  }
+    return null;
+  };
 
-  const createSingleLink = async (data: { content?: string; file?: File; expiresAt: Date }): Promise<string> => {
+  const createSingleLink = async (data: {
+    content?: string;
+    file?: File;
+    expiresAt: Date;
+  }): Promise<string> => {
     // Perform Proof of Work
-    const pow = await doPow(18)
+    const pow = await doPow(18);
 
-    const headers: HeadersInit = { 'Content-Type': 'application/json' }
+    const headers: HeadersInit = { "Content-Type": "application/json" };
     if (auth.sessionId) {
-      headers['Authorization'] = `Bearer ${auth.sessionId}`
+      headers["Authorization"] = `Bearer ${auth.sessionId}`;
     }
 
     let payload: any = {
@@ -187,231 +197,245 @@ export default function App() {
         nonce: pow.nonce,
         salt: Array.from(pow.salt),
         digest: pow.digest,
-        difficulty: pow.difficulty
-      }
-    }
+        difficulty: pow.difficulty,
+      },
+    };
 
     if (data.file) {
       // Convert file to base64
       const fileData = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader()
+        const reader = new FileReader();
         reader.onload = () => {
-          const result = reader.result as string
-          resolve(result.split(',')[1]) // Remove data:... prefix
-        }
-        reader.onerror = reject
-        reader.readAsDataURL(data.file!)
-      })
+          const result = reader.result as string;
+          resolve(result.split(",")[1]); // Remove data:... prefix
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(data.file!);
+      });
 
       payload = {
         ...payload,
-        kind: 'file',
+        kind: "file",
         content: `File: ${data.file.name}`,
         fileName: data.file.name,
         fileType: data.file.type,
         fileSize: data.file.size,
-        fileData: fileData
-      }
+        fileData: fileData,
+      };
     } else {
       payload = {
         ...payload,
-        kind: 'text',
-        content: data.content || ''
-      }
+        kind: "text",
+        content: data.content || "",
+      };
     }
 
     const response = await fetch(`${API_BASE}/v1/clipboard`, {
-      method: 'POST',
+      method: "POST",
       headers,
-      body: JSON.stringify(payload)
-    })
+      body: JSON.stringify(payload),
+    });
 
-    const responseData = await response.json()
+    const responseData = await response.json();
 
     if (responseData.success) {
-      return responseData.url
+      return responseData.url;
     } else {
-      throw new Error(responseData.error || 'Failed to create link')
+      throw new Error(responseData.error || "Failed to create link");
     }
-  }
+  };
 
-  const handleCreateMultipleLinks = async (data: { files: File[]; expiresAt: Date }): Promise<string[]> => {
-    setError('')
-    setMessage('')
-    setLinks([])
+  const handleCreateMultipleLinks = async (data: {
+    files: File[];
+    expiresAt: Date;
+  }): Promise<string[]> => {
+    setError("");
+    setMessage("");
+    setLinks([]);
 
-    const createdLinks: string[] = []
+    const createdLinks: string[] = [];
 
     try {
       for (let i = 0; i < data.files.length; i++) {
-        const file = data.files[i]
+        const file = data.files[i];
 
         try {
-          const url = await createSingleLink({ file, expiresAt: data.expiresAt })
-          createdLinks.push(url)
+          const url = await createSingleLink({
+            file,
+            expiresAt: data.expiresAt,
+          });
+          createdLinks.push(url);
 
           // Update progress
-          setMessage(`Creating links... ${i + 1}/${data.files.length}`)
+          setMessage(`Creating links... ${i + 1}/${data.files.length}`);
 
           // Wait a bit to avoid overwhelming the server
           if (i < data.files.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 200))
+            await new Promise((resolve) => setTimeout(resolve, 200));
           }
         } catch (err) {
-          console.error(`Failed to create link for ${file.name}:`, err)
+          console.error(`Failed to create link for ${file.name}:`, err);
           // Continue with other files
         }
       }
 
       if (createdLinks.length > 0) {
-        setLinks(createdLinks)
-        setMessage(`Created ${createdLinks.length} links successfully!`)
+        setLinks(createdLinks);
+        setMessage(`Created ${createdLinks.length} links successfully!`);
 
         // Copy all links to clipboard (each on new line)
-        const allLinks = createdLinks.join('\n')
-        navigator.clipboard?.writeText(allLinks)
+        const allLinks = createdLinks.join("\n");
+        navigator.clipboard?.writeText(allLinks);
       } else {
-        setError('Failed to create any links.')
+        setError("Failed to create any links.");
       }
 
-      return createdLinks
+      return createdLinks;
     } catch (err) {
-      setError('Failed to create links. Please try again.')
-      return []
+      setError("Failed to create links. Please try again.");
+      return [];
     }
-  }
+  };
 
   const requestMagicLink = async () => {
     if (!email) {
-      setError('Please enter your email')
-      return
+      setError("Please enter your email");
+      return;
     }
 
     try {
       const response = await fetch(`${API_BASE}/v1/auth/request`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (data.success) {
-        setShowEmailModal(false)
-        setShowCodeInput(true)
-        setMessage('Magic link code sent to your email!')
-        setError('')
+        setShowEmailModal(false);
+        setShowCodeInput(true);
+        setMessage("Magic link code sent to your email!");
+        setError("");
       } else {
-        setError(data.error || 'Failed to send magic link')
+        setError(data.error || "Failed to send magic link");
       }
     } catch (err) {
-      setError('Network error. Please try again.')
+      setError("Network error. Please try again.");
     }
-  }
+  };
 
   const verifyCode = async () => {
     if (!code) {
-      setError('Please enter the 6-digit code')
-      return
+      setError("Please enter the 6-digit code");
+      return;
     }
 
     try {
       const response = await fetch(`${API_BASE}/v1/auth/verify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code })
-      })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, code }),
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (data.success) {
-        localStorage.setItem('sessionId', data.sessionId)
+        localStorage.setItem("sessionId", data.sessionId);
         setAuth({
           user: data.user,
           sessionId: data.sessionId,
-          loading: false
-        })
-        setShowCodeInput(false)
-        setMessage('Successfully signed in!')
-        setError('')
-        setEmail('')
-        setCode('')
+          loading: false,
+        });
+        setShowCodeInput(false);
+        setMessage("Successfully signed in!");
+        setError("");
+        setEmail("");
+        setCode("");
       } else {
-        setError(data.error || 'Invalid code')
+        setError(data.error || "Invalid code");
       }
     } catch (err) {
-      setError('Network error. Please try again.')
+      setError("Network error. Please try again.");
     }
-  }
+  };
 
   const handleWalletConnect = async (address: string) => {
     try {
-      console.log('Starting wallet authentication for:', address)
-      setError('')
-      setMessage('')
+      console.log("Starting wallet authentication for:", address);
+      setError("");
+      setMessage("");
 
       // Create a message to sign for authentication
-      const message = `Sign this message to authenticate with CopyPal.\nWallet: ${address}\nTimestamp: ${Date.now()}`
+      const message = `Sign this message to authenticate with CopyPal.\nWallet: ${address}\nTimestamp: ${Date.now()}`;
 
       // For now, we'll skip actual signature verification and just send the address
       // In production, you'd get a signature from the wallet
-      const signature = 'dummy_signature'
+      const signature = "dummy_signature";
 
-      console.log('Sending wallet auth request to:', `${API_BASE}/v1/auth/wallet`)
+      console.log(
+        "Sending wallet auth request to:",
+        `${API_BASE}/v1/auth/wallet`,
+      );
       const response = await fetch(`${API_BASE}/v1/auth/wallet`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           walletAddress: address,
           signature,
-          message
-        })
-      })
+          message,
+        }),
+      });
 
-      console.log('Response status:', response.status)
-      const data = await response.json()
-      console.log('Response data:', data)
+      console.log("Response status:", response.status);
+      const data = await response.json();
+      console.log("Response data:", data);
 
       if (data.success) {
-        localStorage.setItem('sessionId', data.sessionId)
+        localStorage.setItem("sessionId", data.sessionId);
         setAuth({
           user: data.user,
           sessionId: data.sessionId,
-          loading: false
-        })
-        setMessage(`Connected with wallet ${address.slice(0, 6)}...${address.slice(-4)}`)
+          loading: false,
+        });
+        setMessage(
+          `Connected with wallet ${address.slice(0, 6)}...${address.slice(-4)}`,
+        );
       } else {
-        console.error('Wallet auth failed:', data.error)
-        setError(data.error || 'Wallet authentication failed')
+        console.error("Wallet auth failed:", data.error);
+        setError(data.error || "Wallet authentication failed");
       }
     } catch (err) {
-      console.error('Wallet auth error:', err)
-      setError('Failed to authenticate with wallet: ' + (err instanceof Error ? err.message : 'Unknown error'))
+      console.error("Wallet auth error:", err);
+      setError(
+        "Failed to authenticate with wallet: " +
+          (err instanceof Error ? err.message : "Unknown error"),
+      );
     }
-  }
+  };
 
   const handleWalletDisconnect = () => {
-    localStorage.removeItem('sessionId')
-    setAuth({ user: null, sessionId: null, loading: false })
-    setMessage('Wallet disconnected')
-  }
+    localStorage.removeItem("sessionId");
+    setAuth({ user: null, sessionId: null, loading: false });
+    setMessage("Wallet disconnected");
+  };
 
   const logout = async () => {
     if (auth.sessionId) {
       await fetch(`${API_BASE}/v1/auth/logout`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${auth.sessionId}`
-        }
-      })
+          Authorization: `Bearer ${auth.sessionId}`,
+        },
+      });
     }
 
-    localStorage.removeItem('sessionId')
-    setAuth({ user: null, sessionId: null, loading: false })
-    setMessage('Logged out successfully')
-  }
+    localStorage.removeItem("sessionId");
+    setAuth({ user: null, sessionId: null, loading: false });
+    setMessage("Logged out successfully");
+  };
 
   if (auth.loading) {
     return (
@@ -421,7 +445,7 @@ export default function App() {
           <p>Loading...</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -450,12 +474,12 @@ export default function App() {
               <Button
                 className="flex items-center gap-2 bg-[#20C15A] hover:bg-[#1ca549]"
                 onClick={() => {
-                  setShowCodeInput(false)
-                  setEmail('')
-                  setCode('')
-                  setError('')
-                  setMessage('')
-                  setShowEmailModal(true)
+                  setShowCodeInput(false);
+                  setEmail("");
+                  setCode("");
+                  setError("");
+                  setMessage("");
+                  setShowEmailModal(true);
                 }}
               >
                 <Mail className="w-4 h-4" />
@@ -473,8 +497,7 @@ export default function App() {
               <span className="text-sm text-[#9AA7BD]">
                 {auth.user.email
                   ? `Signed in as ${auth.user.email}`
-                  : `Connected: ${auth.user.walletAddress?.slice(0, 6)}...${auth.user.walletAddress?.slice(-4)}`
-                }
+                  : `Connected: ${auth.user.walletAddress?.slice(0, 6)}...${auth.user.walletAddress?.slice(-4)}`}
               </span>
               {auth.user.walletAddress ? (
                 <WalletConnectButton
@@ -500,7 +523,9 @@ export default function App() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <Card className="w-full max-w-md mx-4 bg-[#131A26] border-[#273244]">
             <CardHeader>
-              <h2 className="text-xl font-semibold text-[#E6EAF2]">Sign in with email</h2>
+              <h2 className="text-xl font-semibold text-[#E6EAF2]">
+                Sign in with email
+              </h2>
             </CardHeader>
             <CardContent className="space-y-4">
               <Input
@@ -508,14 +533,15 @@ export default function App() {
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && requestMagicLink()}
+                onKeyPress={(e) => e.key === "Enter" && requestMagicLink()}
                 className="bg-[#0B0F1A] border-[#273244] text-[#E6EAF2]"
               />
-              {error && (
-                <p className="text-sm text-[#E85B5B]">{error}</p>
-              )}
+              {error && <p className="text-sm text-[#E85B5B]">{error}</p>}
               <div className="flex gap-2">
-                <Button onClick={requestMagicLink} className="flex-1 bg-[#20C15A] hover:bg-[#1ca549]">
+                <Button
+                  onClick={requestMagicLink}
+                  className="flex-1 bg-[#20C15A] hover:bg-[#1ca549]"
+                >
                   Send Magic Link
                 </Button>
                 <Button
@@ -536,7 +562,9 @@ export default function App() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <Card className="w-full max-w-md mx-4 bg-[#131A26] border-[#273244]">
             <CardHeader>
-              <h2 className="text-xl font-semibold text-[#E6EAF2]">Enter verification code</h2>
+              <h2 className="text-xl font-semibold text-[#E6EAF2]">
+                Enter verification code
+              </h2>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-[#9AA7BD]">
@@ -547,25 +575,24 @@ export default function App() {
                 placeholder="6-digit code"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && verifyCode()}
+                onKeyPress={(e) => e.key === "Enter" && verifyCode()}
                 maxLength={6}
                 className="bg-[#0B0F1A] border-[#273244] text-[#E6EAF2]"
               />
-              {error && (
-                <p className="text-sm text-[#E85B5B]">{error}</p>
-              )}
-              {message && (
-                <p className="text-sm text-[#20C15A]">{message}</p>
-              )}
+              {error && <p className="text-sm text-[#E85B5B]">{error}</p>}
+              {message && <p className="text-sm text-[#20C15A]">{message}</p>}
               <div className="flex gap-2">
-                <Button onClick={verifyCode} className="flex-1 bg-[#20C15A] hover:bg-[#1ca549]">
+                <Button
+                  onClick={verifyCode}
+                  className="flex-1 bg-[#20C15A] hover:bg-[#1ca549]"
+                >
                   Verify Code
                 </Button>
                 <Button
                   variant="secondary"
                   onClick={() => {
-                    setShowCodeInput(false)
-                    setShowEmailModal(true)
+                    setShowCodeInput(false);
+                    setShowEmailModal(true);
                   }}
                   className="bg-[#273244] hover:bg-[#334155] border border-[#3a465a]"
                 >
@@ -583,9 +610,12 @@ export default function App() {
           {/* Left Column - Hero and Features (hidden on mobile) */}
           <section className="hidden lg:flex flex-col justify-center space-y-6">
             <div>
-              <h1 className="text-4xl font-semibold mb-3">Share clips in two clicks.</h1>
+              <h1 className="text-4xl font-semibold mb-3">
+                Share clips in two clicks.
+              </h1>
               <p className="text-xl text-[#9AA7BD] max-w-prose">
-                A temporary, cross-device clipboard backed by DB-Chain. Create short-lived links for text or files in seconds.
+                A temporary, cross-device clipboard backed by DB-Chain. Create
+                short-lived links for text or files in seconds.
               </p>
             </div>
 
@@ -601,7 +631,9 @@ export default function App() {
             {/* Mobile Hero */}
             <div className="lg:hidden text-center mb-8">
               <h1 className="text-3xl font-bold mb-2">CopyPal</h1>
-              <p className="text-[#9AA7BD]">A temporary, cross-device clipboard backed by DB-Chain</p>
+              <p className="text-[#9AA7BD]">
+                A temporary, cross-device clipboard backed by DB-Chain
+              </p>
             </div>
 
             {/* Messages */}
@@ -616,13 +648,18 @@ export default function App() {
               </div>
             )}
 
-            <ShareCard onCreateLink={handleCreateLink} onCreateMultipleLinks={handleCreateMultipleLinks} sessionId={auth.sessionId} />
-
+            <ShareCard
+              onCreateLink={handleCreateLink}
+              onCreateMultipleLinks={handleCreateMultipleLinks}
+              sessionId={auth.sessionId}
+            />
 
             {/* Result Link */}
             {link && (
               <div className="mt-6 bg-[#131A26]/50 backdrop-blur-sm border border-[#273244] rounded-2xl p-6">
-                <h3 className="text-lg font-semibold mb-4 text-[#E6EAF2]">Your link is ready</h3>
+                <h3 className="text-lg font-semibold mb-4 text-[#E6EAF2]">
+                  Your link is ready
+                </h3>
                 <div className="flex gap-2">
                   <Input
                     value={link}
@@ -631,8 +668,8 @@ export default function App() {
                   />
                   <Button
                     onClick={() => {
-                      navigator.clipboard?.writeText(link)
-                      setMessage('Link copied ✅')
+                      navigator.clipboard?.writeText(link);
+                      setMessage("Link copied ✅");
                     }}
                     className="bg-[#20C15A] hover:bg-[#1ca549]"
                   >
@@ -640,7 +677,7 @@ export default function App() {
                   </Button>
                   <Button
                     variant="secondary"
-                    onClick={() => window.open(link, '_blank')}
+                    onClick={() => window.open(link, "_blank")}
                     className="bg-[#273244] hover:bg-[#334155] border border-[#3a465a]"
                   >
                     Open
@@ -652,7 +689,9 @@ export default function App() {
             {/* Multiple Result Links */}
             {links.length > 0 && (
               <div className="mt-6 bg-[#131A26]/50 backdrop-blur-sm border border-[#273244] rounded-2xl p-6">
-                <h3 className="text-lg font-semibold mb-4 text-[#E6EAF2]">Your links are ready ({links.length})</h3>
+                <h3 className="text-lg font-semibold mb-4 text-[#E6EAF2]">
+                  Your links are ready ({links.length})
+                </h3>
                 <div className="space-y-3 max-h-60 overflow-y-auto">
                   {links.map((linkUrl, index) => (
                     <div key={index} className="flex gap-2">
@@ -663,8 +702,8 @@ export default function App() {
                       />
                       <Button
                         onClick={() => {
-                          navigator.clipboard?.writeText(linkUrl)
-                          setMessage(`Link ${index + 1} copied ✅`)
+                          navigator.clipboard?.writeText(linkUrl);
+                          setMessage(`Link ${index + 1} copied ✅`);
                         }}
                         className="bg-[#20C15A] hover:bg-[#1ca549]"
                       >
@@ -672,7 +711,7 @@ export default function App() {
                       </Button>
                       <Button
                         variant="secondary"
-                        onClick={() => window.open(linkUrl, '_blank')}
+                        onClick={() => window.open(linkUrl, "_blank")}
                         className="bg-[#273244] hover:bg-[#334155] border border-[#3a465a]"
                       >
                         Open
@@ -683,9 +722,9 @@ export default function App() {
                 <div className="mt-4 pt-4 border-t border-[#273244]">
                   <Button
                     onClick={() => {
-                      const allLinks = links.join('\n')
-                      navigator.clipboard?.writeText(allLinks)
-                      setMessage('All links copied ✅')
+                      const allLinks = links.join("\n");
+                      navigator.clipboard?.writeText(allLinks);
+                      setMessage("All links copied ✅");
                     }}
                     variant="secondary"
                     className="w-full bg-[#273244] hover:bg-[#334155] border border-[#3a465a]"
@@ -704,8 +743,11 @@ export default function App() {
         <span className="inline-flex items-center gap-1">
           ⚡ Free tier: 50 clips/day, 10 requests/hour
         </span>
-        {' · '}
-        <a href="#" className="underline hover:text-[#20C15A] transition-colors">
+        {" · "}
+        <a
+          href="#"
+          className="underline hover:text-[#20C15A] transition-colors"
+        >
           Learn more
         </a>
       </footer>
@@ -716,12 +758,12 @@ export default function App() {
         open={loginMethodModalOpen}
         onOpenChange={setLoginMethodModalOpen}
         onEmailClick={() => {
-          setLoginMethodModalOpen(false)
-          setShowEmailModal(true)
+          setLoginMethodModalOpen(false);
+          setShowEmailModal(true);
         }}
         onWalletClick={() => {
-          setLoginMethodModalOpen(false)
-          setWalletModalOpen(true)
+          setLoginMethodModalOpen(false);
+          setWalletModalOpen(true);
         }}
       />
 
@@ -731,5 +773,5 @@ export default function App() {
         onConnect={handleWalletConnect}
       />
     </div>
-  )
+  );
 }

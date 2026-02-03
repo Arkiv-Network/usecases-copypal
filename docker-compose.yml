@@ -1,6 +1,6 @@
 services:
   copypal-backend:
-    image: moonplkr/copypal-backend:latest
+    image: ghcr.io/arkiv-network/usecases-copypal-backend:latest
     ports:
       - "19234:19234"
     env_file:
@@ -22,7 +22,7 @@ services:
       - moon_golem_network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.copypal-api.rule=Host(`copypal.online`) && PathPrefix(`/api/`)"
+      - "traefik.http.routers.copypal-api.rule=Host(`copypal.usecases.arkiv.network`) && PathPrefix(`/api/`)"
       - "traefik.http.routers.copypal-api.entrypoints=websecure"
       - "traefik.http.routers.copypal-api.tls.certresolver=letsencrypt"
       - "traefik.http.routers.copypal-api.priority=300"
@@ -33,7 +33,7 @@ services:
       - "traefik.http.services.copypal-api.loadbalancer.responseForwarding.flushInterval=1s"
       - "traefik.http.services.copypal-api.loadbalancer.passhostheader=true"
       # WebSocket support
-      - "traefik.http.routers.copypal-ws.rule=Host(`copypal.online`) && Path(`/ws/progress`)"
+      - "traefik.http.routers.copypal-ws.rule=Host(`copypal.usecases.arkiv.network`) && Path(`/ws/progress`)"
       - "traefik.http.routers.copypal-ws.entrypoints=websecure"
       - "traefik.http.routers.copypal-ws.tls.certresolver=letsencrypt"
       - "traefik.http.routers.copypal-ws.priority=200"
@@ -41,7 +41,7 @@ services:
       - "traefik.http.services.copypal-ws.loadbalancer.server.port=19234"
 
   copypal-frontend:
-    image: moonplkr/copypal-frontend:latest
+    image: ghcr.io/arkiv-network/usecases-copypal-frontend:latest
     ports:
       - "8881:80"
     environment:
@@ -53,7 +53,7 @@ services:
       - moon_golem_network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.copypal.rule=Host(`copypal.online`)"
+      - "traefik.http.routers.copypal.rule=Host(`copypal.usecases.arkiv.network`)"
       - "traefik.http.routers.copypal.entrypoints=websecure"
       - "traefik.http.routers.copypal.tls.certresolver=letsencrypt"
       - "traefik.http.routers.copypal.priority=50"

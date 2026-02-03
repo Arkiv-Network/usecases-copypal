@@ -120,19 +120,19 @@ const response = await fetch('/api/v2/clipboard/smart-upload', {
 
 ### **Test Quota Check:**
 ```bash
-curl -s https://copypal.online/api/v2/quota
+curl -s https://copypal.usecases.arkiv.network/api/v2/quota
 ```
 
 ### **Test Smart Upload:**
 ```bash
-curl -X POST https://copypal.online/api/v2/clipboard/smart-upload \
+curl -X POST https://copypal.usecases.arkiv.network/api/v2/clipboard/smart-upload \
   -H "Content-Type: application/json" \
   -d '{"kind":"text","content":"test","ttlDays":1}'
 ```
 
 ### **Test Session Status:**
 ```bash
-curl -s https://copypal.online/api/v2/session/test-session-key/status
+curl -s https://copypal.usecases.arkiv.network/api/v2/session/test-session-key/status
 ```
 
 ## **📊 SWARM ANALYSIS VERDICT**

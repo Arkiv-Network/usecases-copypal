@@ -26,7 +26,7 @@ curl -X POST "https://upload.filedb.online/files" \
 
 ### 2. Upload przez CopyPal API (NIEPOPRAWNY FORMAT)
 ```bash
-curl -X POST "https://copypal.online/api/v1/clipboard" \
+curl -X POST "https://copypal.usecases.arkiv.network/api/v1/clipboard" \
   -H "Content-Type: application/json" \
   -d "{
     \"type\": \"file\",
@@ -43,7 +43,7 @@ curl -X POST "https://copypal.online/api/v1/clipboard" \
 
 ### 3. Upload przez CopyPal API (POPRAWNY FORMAT - TIMEOUT)
 ```bash
-curl -X POST "https://copypal.online/api/v1/clipboard" \
+curl -X POST "https://copypal.usecases.arkiv.network/api/v1/clipboard" \
   -H "Content-Type: application/json" \
   -d "{
     \"kind\": \"file\",
@@ -106,9 +106,9 @@ time curl -X POST "https://upload.filedb.online/files" \
 ## Podsumowanie wydajności
 
 | Rozmiar pliku | FilesDB bezpośrednio | CopyPal API |
-|---------------|---------------------|-------------|
-| ≤512KB        | ✅ ~11s             | ❌ Timeout  |
-| 1MB+          | ❌ Internal error   | ❌ Timeout  |
+| ------------- | -------------------- | ----------- |
+| ≤512KB        | ✅ ~11s               | ❌ Timeout   |
+| 1MB+          | ❌ Internal error     | ❌ Timeout   |
 
 ## Przyczyny problemów
 

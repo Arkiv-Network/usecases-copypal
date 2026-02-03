@@ -1,97 +1,105 @@
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react";
 
 interface FileDBProgress {
-  file_id: string
-  status: 'uploading' | 'completed' | 'failed'
-  completed: boolean
+  file_id: string;
+  status: "uploading" | "completed" | "failed";
+  completed: boolean;
   progress: {
-    chunks_uploaded: number
-    total_chunks: number
-    percentage: number
-    remaining_chunks: number
-    elapsed_seconds: number
-    estimated_remaining_seconds: number | null
-    last_chunk_uploaded_at: string | null
-  }
-  error: string | null
+    chunks_uploaded: number;
+    total_chunks: number;
+    percentage: number;
+    remaining_chunks: number;
+    elapsed_seconds: number;
+    estimated_remaining_seconds: number | null;
+    last_chunk_uploaded_at: string | null;
+  };
+  error: string | null;
   file_info: {
-    original_filename: string
-    file_size: number
-    content_type: string
-    owner?: string
-  }
+    original_filename: string;
+    file_size: number;
+    content_type: string;
+    owner?: string;
+  };
 }
 
 interface DualProgressBarProps {
-  clipboardId: string | null
-  onComplete?: () => void
+  clipboardId: string | null;
+  onComplete?: () => void;
 }
 
-const API_BASE = import.meta.env.MODE === 'production'
-  ? 'https://copypal.online/api'
-  : 'http://localhost:19234'
+const API_BASE =
+  import.meta.env.MODE === "production"
+    ? "https://copypal.usecases.arkiv.network/api"
+    : "http://localhost:19234";
 
-export function DualProgressBar({ clipboardId, onComplete }: DualProgressBarProps) {
-  const [arkivProgress, setArkivProgress] = useState<FileDBProgress | null>(null)
+export function DualProgressBar({
+  clipboardId,
+  onComplete,
+}: DualProgressBarProps) {
+  const [arkivProgress, setArkivProgress] = useState<FileDBProgress | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!clipboardId) {
-      setArkivProgress(null)
-      return
+      setArkivProgress(null);
+      return;
     }
 
-    let isActive = true
-    let timeoutId: ReturnType<typeof setTimeout> | undefined
+    let isActive = true;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
     const poll = async () => {
-      if (!isActive) return
+      if (!isActive) return;
 
       try {
-        const response = await fetch(`${API_BASE}/v1/clipboard/${clipboardId}/progress`)
+        const response = await fetch(
+          `${API_BASE}/v1/clipboard/${clipboardId}/progress`,
+        );
         if (response.ok) {
-          const progress: FileDBProgress = await response.json()
-          setArkivProgress(progress)
+          const progress: FileDBProgress = await response.json();
+          setArkivProgress(progress);
 
-          if (progress.completed || progress.status === 'failed') {
-            isActive = false
-            onComplete?.()
-            return
+          if (progress.completed || progress.status === "failed") {
+            isActive = false;
+            onComplete?.();
+            return;
           }
         }
       } catch (error) {
-        console.error('Progress polling error:', error)
+        console.error("Progress polling error:", error);
       }
 
-      if (!isActive) return
-      timeoutId = setTimeout(poll, 2000)
-    }
+      if (!isActive) return;
+      timeoutId = setTimeout(poll, 2000);
+    };
 
-    poll()
+    poll();
 
     return () => {
-      isActive = false
+      isActive = false;
       if (timeoutId) {
-        clearTimeout(timeoutId)
+        clearTimeout(timeoutId);
       }
-    }
-  }, [clipboardId, onComplete])
+    };
+  }, [clipboardId, onComplete]);
 
   const formatTime = (seconds: number): string => {
-    if (seconds < 60) return `${seconds}s`
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}m ${secs}s`
-  }
+    if (seconds < 60) return `${seconds}s`;
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}m ${secs}s`;
+  };
 
   const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes'
-    const k = 1024
-    const sizes = ['Bytes', 'KB', 'MB', 'GB']
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-  }
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / k ** i).toFixed(2)) + " " + sizes[i];
+  };
 
-  if (!clipboardId) return null
+  if (!clipboardId) return null;
 
   return (
     <div className="space-y-4 p-4 bg-[#0B0F1A] border border-[#273244] rounded-lg">
@@ -106,7 +114,7 @@ export function DualProgressBar({ clipboardId, onComplete }: DualProgressBarProp
         <div className="w-full bg-[#273244] rounded-full h-2">
           <div
             className="bg-[#20C15A] h-2 rounded-full transition-all duration-300"
-            style={{ width: '100%' }}
+            style={{ width: "100%" }}
           />
         </div>
       </div>
@@ -115,30 +123,31 @@ export function DualProgressBar({ clipboardId, onComplete }: DualProgressBarProp
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
           <span className="text-[#9AA7BD]">CopyPal → Arkiv</span>
-          <span className={`${
-            arkivProgress?.completed
-              ? 'text-[#20C15A]'
-              : arkivProgress?.status === 'failed'
-                ? 'text-[#E85B5B]'
-                : 'text-[#9AA7BD]'
-          }`}>
+          <span
+            className={`${
+              arkivProgress?.completed
+                ? "text-[#20C15A]"
+                : arkivProgress?.status === "failed"
+                  ? "text-[#E85B5B]"
+                  : "text-[#9AA7BD]"
+            }`}
+          >
             {arkivProgress?.completed
-              ? '✓ Complete'
-              : arkivProgress?.status === 'failed'
-                ? '✗ Failed'
+              ? "✓ Complete"
+              : arkivProgress?.status === "failed"
+                ? "✗ Failed"
                 : arkivProgress?.progress.percentage
                   ? `${arkivProgress.progress.percentage}%`
-                  : 'Starting...'
-            }
+                  : "Starting..."}
           </span>
         </div>
 
         <div className="w-full bg-[#273244] rounded-full h-2">
           <div
             className={`h-2 rounded-full transition-all duration-300 ${
-              arkivProgress?.status === 'failed'
-                ? 'bg-[#E85B5B]'
-                : 'bg-[#20C15A]'
+              arkivProgress?.status === "failed"
+                ? "bg-[#E85B5B]"
+                : "bg-[#20C15A]"
             }`}
             style={{ width: `${arkivProgress?.progress.percentage || 0}%` }}
           />
@@ -156,16 +165,23 @@ export function DualProgressBar({ clipboardId, onComplete }: DualProgressBarProp
 
             {arkivProgress.progress.total_chunks > 0 && (
               <div className="flex justify-between">
-                <span>Chunks: {arkivProgress.progress.chunks_uploaded}/{arkivProgress.progress.total_chunks}</span>
+                <span>
+                  Chunks: {arkivProgress.progress.chunks_uploaded}/
+                  {arkivProgress.progress.total_chunks}
+                </span>
                 {arkivProgress.progress.elapsed_seconds > 0 && (
-                  <span>Elapsed: {formatTime(arkivProgress.progress.elapsed_seconds)}</span>
+                  <span>
+                    Elapsed:{" "}
+                    {formatTime(arkivProgress.progress.elapsed_seconds)}
+                  </span>
                 )}
               </div>
             )}
 
             {arkivProgress.progress.estimated_remaining_seconds && (
               <div className="text-center text-[#9AA7BD]">
-                Estimated time remaining: ~{formatTime(arkivProgress.progress.estimated_remaining_seconds)}
+                Estimated time remaining: ~
+                {formatTime(arkivProgress.progress.estimated_remaining_seconds)}
               </div>
             )}
 
@@ -178,5 +194,5 @@ export function DualProgressBar({ clipboardId, onComplete }: DualProgressBarProp
         )}
       </div>
     </div>
-  )
+  );
 }

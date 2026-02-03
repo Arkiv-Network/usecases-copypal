@@ -11,7 +11,7 @@
 - Manual dispatch
 
 **Jobs:**
-- **Production Tests**: Tests against live production environment (copypal.online)
+- **Production Tests**: Tests against live production environment (copypal.usecases.arkiv.network)
 - **Docker Tests**: Builds and tests Docker containers locally
 
 **Usage:**
@@ -26,8 +26,8 @@ gh workflow run smoke-tests.yml
 - Manual dispatch only
 
 **Inputs:**
-- `api_base`: API Base URL (default: https://copypal.online/api)
-- `frontend_url`: Frontend URL (default: https://copypal.online)
+- `api_base`: API Base URL (default: https://copypal.usecases.arkiv.network/api)
+- `frontend_url`: Frontend URL (default: https://copypal.usecases.arkiv.network)
 - `test_suite`: Which tests to run (all/backend/frontend/integration)
 
 **Usage:**
@@ -80,11 +80,11 @@ gh workflow run smoke-tests-manual.yml \
 
 ## Test Matrix
 
-| Workflow | Production | Docker | PR Build |
-|----------|-----------|--------|----------|
-| smoke-tests.yml | ✅ | ✅ | ❌ |
-| smoke-tests-manual.yml | ✅ | ❌ | ❌ |
-| smoke-tests-pr.yml | ❌ | ❌ | ✅ |
+| Workflow               | Production | Docker | PR Build |
+| ---------------------- | ---------- | ------ | -------- |
+| smoke-tests.yml        | ✅          | ✅      | ❌        |
+| smoke-tests-manual.yml | ✅          | ❌      | ❌        |
+| smoke-tests-pr.yml     | ❌          | ❌      | ✅        |
 
 ## Monitoring
 
